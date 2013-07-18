@@ -36,6 +36,7 @@ object SparkBuild extends Build {
   def sharedSettings = Defaults.defaultSettings ++ Seq(
     organization       := "org.spark-project",
     version            := "0.8.0-SNAPSHOT",
+    scalaHome          := Some(file(System.getenv("PARADISE211_HOME"))),
     scalaVersion       := "2.10.1",
     scalacOptions      := Seq("-unchecked", "-optimize", "-deprecation"),
     unmanagedJars in Compile <<= baseDirectory map { base => (base / "lib" ** "*.jar").classpath },
@@ -134,27 +135,27 @@ object SparkBuild extends Build {
     ),
 
     libraryDependencies ++= Seq(
-        "com.google.guava"    % "guava"            % "11.0.1",
-        "log4j"               % "log4j"            % "1.2.16",
-        "org.slf4j"           % "slf4j-api"        % slf4jVersion,
-        "org.slf4j"           % "slf4j-log4j12"    % slf4jVersion,
-        "com.ning"            % "compress-lzf"     % "0.8.4",
-        "org.apache.hadoop"   % "hadoop-core"      % HADOOP_VERSION excludeAll(excludeNetty, excludeJackson),
-        "asm"                 % "asm-all"          % "3.3.1",
-        "com.google.protobuf" % "protobuf-java"    % "2.4.1",
-        "de.javakaffee"       % "kryo-serializers" % "0.20",
-        "com.typesafe.akka"  %% "akka-remote"      % "2.1.4" excludeAll(excludeNetty),
-        "com.typesafe.akka"  %% "akka-slf4j"       % "2.1.4" excludeAll(excludeNetty),
-        "it.unimi.dsi"        % "fastutil"         % "6.4.4",
-        "io.spray"            % "spray-can"        % "1.1-M7" excludeAll(excludeNetty),
-        "io.spray"            % "spray-io"         % "1.1-M7" excludeAll(excludeNetty),
-        "io.spray"            % "spray-routing"    % "1.1-M7" excludeAll(excludeNetty),
-        "io.spray"           %% "spray-json"       % "1.2.3" excludeAll(excludeNetty),
-        "colt"                % "colt"             % "1.2.0",
-        "org.apache.mesos"    % "mesos"            % "0.9.0-incubating",
-        "org.scala-lang"      % "scala-actors"     % "2.10.1",
-        "org.scala-lang"      % "jline"            % "2.10.1",
-        "org.scala-lang"      % "scala-reflect"    % "2.10.1"
+        "com.google.guava"              % "guava"            % "11.0.1",
+        "log4j"                         % "log4j"            % "1.2.16",
+        "org.slf4j"                     % "slf4j-api"        % slf4jVersion,
+        "org.slf4j"                     % "slf4j-log4j12"    % slf4jVersion,
+        "com.ning"                      % "compress-lzf"     % "0.8.4",
+        "org.apache.hadoop"             % "hadoop-core"      % HADOOP_VERSION excludeAll(excludeNetty, excludeJackson),
+        "asm"                           % "asm-all"          % "3.3.1",
+        "com.google.protobuf"           % "protobuf-java"    % "2.4.1",
+        "de.javakaffee"                 % "kryo-serializers" % "0.20",
+        "com.typesafe.akka"            %% "akka-remote"      % "2.1.4" excludeAll(excludeNetty),
+        "com.typesafe.akka"            %% "akka-slf4j"       % "2.1.4" excludeAll(excludeNetty),
+        "it.unimi.dsi"                  % "fastutil"         % "6.4.4",
+        "io.spray"                      % "spray-can"        % "1.1-M7" excludeAll(excludeNetty),
+        "io.spray"                      % "spray-io"         % "1.1-M7" excludeAll(excludeNetty),
+        "io.spray"                      % "spray-routing"    % "1.1-M7" excludeAll(excludeNetty),
+        "io.spray"                     %% "spray-json"       % "1.2.3" excludeAll(excludeNetty),
+        "colt"                          % "colt"             % "1.2.0",
+        "org.apache.mesos"              % "mesos"            % "0.9.0-incubating",
+        "org.scala-lang.macro-paradise" % "scala-actors"     % "2.11.0-SNAPSHOT",
+        "org.scala-lang.macro-paradise" % "jline"            % "2.11.0-SNAPSHOT",
+        "org.scala-lang.macro-paradise" % "scala-reflect"    % "2.11.0-SNAPSHOT"
       ) ++ (if (HADOOP_MAJOR_VERSION == "2")
           Some("org.apache.hadoop" % "hadoop-client" % HADOOP_VERSION excludeAll(excludeNetty, excludeJackson))
         else
@@ -170,7 +171,7 @@ object SparkBuild extends Build {
  def replSettings = sharedSettings ++ Seq(
     name := "spark-repl",
     // libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _)
-    libraryDependencies ++= Seq("org.scala-lang" % "scala-compiler" % "2.10.1")
+    libraryDependencies ++= Seq("org.scala-lang.macro-paradise" % "scala-compiler" % "2.11.0-SNAPSHOT")
   )
 
   def examplesSettings = sharedSettings ++ Seq(
