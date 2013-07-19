@@ -6,9 +6,24 @@ import java.nio.ByteBuffer
 import serializer.{Serializer, SerializerInstance, DeserializationStream, SerializationStream}
 import spark.util.ByteBufferInputStream
 
-private[spark] class JavaSerializationStream(out: OutputStream) extends SerializationStream {
+object JavaTimer {
+  var value = new java.util.concurrent.atomic.AtomicLong
+}
+
+private[spark] class JavaSerializationStream(out: OutputStream) extends SerializationStream with Logging {
   val objOut = new ObjectOutputStream(out)
-  def writeObject[T](t: T): SerializationStream = { objOut.writeObject(t); this }
+  def writeObject[T](t: T): SerializationStream = {
+    // import java.io.StringWriter;
+    // import java.io.PrintWriter;
+    // val sw = new StringWriter();
+    // new Throwable().printStackTrace(new PrintWriter(sw));
+    // logInfo("Current stack trace is:\n\t" + sw.toString());
+    val start = System.currentTimeMillis()
+    objOut.writeObject(t)
+    val end = System.currentTimeMillis()
+    JavaTimer.value.addAndGet(end - start)
+    this
+  }
   def flush() { objOut.flush() }
   def close() { objOut.close() }
 }
@@ -20,7 +35,13 @@ extends DeserializationStream {
       Class.forName(desc.getName, false, loader)
   }
 
-  def readObject[T](): T = objIn.readObject().asInstanceOf[T]
+  def readObject[T](): T = {
+    val start = System.currentTimeMillis()
+    val result = objIn.readObject().asInstanceOf[T]
+    val end = System.currentTimeMillis()
+    JavaTimer.value.addAndGet(end - start)
+    result
+  }
   def close() { objIn.close() }
 }
 

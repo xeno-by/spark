@@ -9,7 +9,7 @@ import spark._
  * Logistic regression based classification.
  */
 object SparkLR {
-  val N = 10000  // Number of data points
+  val N = 500000  // Number of data points
   val D = 10   // Numer of dimensions
   val R = 0.7  // Scaling factor
   val ITERATIONS = 5
@@ -27,6 +27,13 @@ object SparkLR {
   }
 
   def main(args: Array[String]) {
+    System.setProperty("spark.cores.max", "2")
+    System.setProperty("spark.serializer", "spark.KryoSerializer")
+    // System.setProperty("spark.closure.serializer", "spark.KryoSerializer")
+    // System.setProperty("spark.kryoserializer.buffer.mb", "24")
+    // System.setProperty("spark.kryo.referenceTracking", "false")
+    // System.setProperty("spark.kryo.referenceTracking", "true")
+    // System.setProperty("spark.kryo.registrator", classOf[PRKryoRegistrator].getName)
     if (args.length == 0) {
       System.err.println("Usage: SparkLR <master> [<slices>]")
       System.exit(1)
@@ -34,7 +41,8 @@ object SparkLR {
     val sc = new SparkContext(args(0), "SparkLR",
       System.getenv("SPARK_HOME"), Seq(System.getenv("SPARK_EXAMPLES_JAR")))
     val numSlices = if (args.length > 1) args(1).toInt else 2
-    val points = sc.parallelize(generateData, numSlices).cache()
+    // val points = sc.parallelize(generateData, numSlices).cache()
+    val points = sc.parallelize(generateData, numSlices).persist(spark.storage.StorageLevel.MEMORY_ONLY_SER)
 
     // Initialize w to a random value
     var w = Vector(D, _ => 2 * rand.nextDouble - 1)
@@ -49,6 +57,8 @@ object SparkLR {
     }
 
     println("Final w: " + w)
+    Console.err.println("KRYO: " + spark.KryoTimer.value)
+    Console.err.println("JAVA: " + spark.JavaTimer.value)
     System.exit(0)
   }
 }

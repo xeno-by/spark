@@ -17,13 +17,25 @@ import serializer.{SerializerInstance, DeserializationStream, SerializationStrea
 import spark.broadcast._
 import spark.storage._
 
+object KryoTimer {
+  var value = new java.util.concurrent.atomic.AtomicLong
+}
+
 private[spark]
 class KryoSerializationStream(kryo: Kryo, outStream: OutputStream) extends SerializationStream {
 
   val output = new KryoOutput(outStream)
 
   def writeObject[T](t: T): SerializationStream = {
+    // import java.io.StringWriter;
+    // import java.io.PrintWriter;
+    // val sw = new StringWriter();
+    // new Throwable().printStackTrace(new PrintWriter(sw));
+    // println("Current stack trace is:\n\t" + sw.toString());
+    val start = System.currentTimeMillis()
     kryo.writeClassAndObject(output, t)
+    val end = System.currentTimeMillis()
+    KryoTimer.value.getAndAdd(end - start)
     this
   }
 
@@ -38,7 +50,16 @@ class KryoDeserializationStream(kryo: Kryo, inStream: InputStream) extends Deser
 
   def readObject[T](): T = {
     try {
-      kryo.readClassAndObject(input).asInstanceOf[T]
+      // import java.io.StringWriter;
+      // import java.io.PrintWriter;
+      // val sw = new StringWriter();
+      // new Throwable().printStackTrace(new PrintWriter(sw));
+      // println("Current stack trace is:\n\t" + sw.toString());
+      val start = System.currentTimeMillis()
+      val result = kryo.readClassAndObject(input).asInstanceOf[T]
+      val end = System.currentTimeMillis()
+      KryoTimer.value.getAndAdd(end - start)
+      result
     } catch {
       // DeserializationStream uses the EOF exception to indicate stopping condition.
       case e: com.esotericsoftware.kryo.KryoException => throw new java.io.EOFException
@@ -218,7 +239,11 @@ class KryoSerializer extends spark.serializer.Serializer with Logging {
   }
 
   def newInstance(): SerializerInstance = {
+    val start = System.currentTimeMillis()
     this.kryo.get().setClassLoader(Thread.currentThread().getContextClassLoader)
-    new KryoSerializerInstance(this)
+    val result = new KryoSerializerInstance(this)
+    val end = System.currentTimeMillis()
+    KryoTimer.value.getAndAdd(end - start)
+    result
   }
 }
